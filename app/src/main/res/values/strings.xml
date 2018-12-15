@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">LocationBackgroundService</string>
+    <string name="batched_location_updates">Batched Location Updates</string>
+    <string name="remove_updates">Remove Updates</string>
+    <string name="request_updates">Request Updates</string>
+    <string name="unknown_location">Unknown location</string>
+
+    <plurals name="num_locations_reported">
+        <item quantity="zero">No location reported</item>
+        <item quantity="one">One location reported</item>
+        <item quantity="other">%d locations reported</item>
+    </plurals>
+
+    <string name="default_channel">Default channel</string>
+</resources>
