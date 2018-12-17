@@ -3,6 +3,7 @@ package android.form.avss.locationbackgroundservice;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.JobIntentService;
 import android.util.Log;
@@ -37,27 +38,9 @@ public class LocationUpdatesIntentService extends JobIntentService {
     protected void onHandleWork(@NonNull Intent intent) {
         final String action = intent.getAction();
         if (ACTION_UPDATES_SERVICES.equals(action)) {
-            LocationResult result = LocationResult.extractResult(intent);
-            if (result != null) {
-                List<Location> locations = result.getLocations();
-                LocationResultHelper locationResultHelper = new LocationResultHelper(this, locations);
-                // Save the location data to SharedPreferences.
-                locationResultHelper.saveResults();
-                // Show notification with the location data.
-                locationResultHelper.showNotification();
-                Log.i(TAG, LocationResultHelper.getSavedLocationResult(this));
-            }
-        }
-    }
-}
-
-
-/*
-    protected void onHandleIntent(@Nullable Intent intent) {
-        if (intent != null) {
-            final String action = intent.getAction();
-            if (ACTION_UPDATES_SERVICES.equals(action)) {
-                LocationResult result = LocationResult.extractResult(intent);
+            Bundle bundle = intent.getExtras();
+            if (bundle != null) {
+                LocationResult result = bundle.getParcelable("LOCATION");
                 if (result != null) {
                     List<Location> locations = result.getLocations();
                     LocationResultHelper locationResultHelper = new LocationResultHelper(this, locations);
@@ -70,8 +53,4 @@ public class LocationUpdatesIntentService extends JobIntentService {
             }
         }
     }
-
-
-
-
- */
+}

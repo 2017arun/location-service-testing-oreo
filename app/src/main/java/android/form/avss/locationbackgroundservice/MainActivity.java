@@ -7,7 +7,11 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Build;
+import android.os.Looper;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -25,11 +29,17 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.tasks.Task;
+
+import java.util.List;
+
+import static android.form.avss.locationbackgroundservice.LocationUpdatesBroadcastReceiver.ACTION_UPDATES_SERVICES;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
@@ -193,7 +203,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (requestCode == REQUEST_CHECK_SETTINGS) {
@@ -206,17 +215,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    private PendingIntent getPendingIntent() {
-        Intent intent = new Intent(this, LocationUpdatesBroadcastReceiver.class);
-        intent.setAction(LocationUpdatesBroadcastReceiver.ACTION_UPDATES_SERVICES);
-        LocationUpdatesIntentService.enqueueWork(this, intent);
-        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-    }
-
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Log.i(TAG, "GoogleApiClient connected");
-
     }
 
     @Override
@@ -240,6 +241,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    LocationCallback mLocationCallback = new LocationCallback() {
+        @Override
+        public void onLocationResult(LocationResult locationResult) {
+            super.onLocationResult(locationResult);
+            Intent intent = new Intent(MainActivity.this, LocationUpdatesBroadcastReceiver.class);
+            intent.setAction(ACTION_UPDATES_SERVICES);
+            intent.putExtra("LOCATION", locationResult);
+            LocationUpdatesIntentService.enqueueWork(MainActivity.this, intent);
+        }
+    };
+
     /**
      * Handles the Request Updates button and requests start of location updates.
      */
@@ -252,14 +264,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
+
             mFusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
                 if (location != null) {
                     toast(location.getLatitude() + "  :  " + location.getLongitude());
                 }
             });
 
-            mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent());
-
+            mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
         } catch (Exception e) { }
     }
 
@@ -269,7 +281,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void removeLocationUpdates() {
         Log.i(TAG, "Removing location updates");
         LocationRequestHelper.setRequesting(this, false);
-        mFusedLocationClient.removeLocationUpdates(getPendingIntent());
+        mFusedLocationClient.removeLocationUpdates(mLocationCallback);
+        tvLocationUpdate.setText("");
+        toast("Removing location updates");
     }
 
     @Override
