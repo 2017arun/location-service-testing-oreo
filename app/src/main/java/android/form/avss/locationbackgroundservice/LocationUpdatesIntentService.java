@@ -36,11 +36,10 @@ public class LocationUpdatesIntentService extends JobIntentService {
 
     @Override
     protected void onHandleWork(@NonNull Intent intent) {
-        final String action = intent.getAction();
-        if (ACTION_UPDATES_SERVICES.equals(action)) {
+        if (ACTION_UPDATES_SERVICES.equals(intent.getAction())) {
             Bundle bundle = intent.getExtras();
             if (bundle != null) {
-                LocationResult result = bundle.getParcelable("LOCATION");
+                LocationResult result = bundle.getParcelable(MainActivity.LOCATION);
                 if (result != null) {
                     List<Location> locations = result.getLocations();
                     LocationResultHelper locationResultHelper = new LocationResultHelper(this, locations);

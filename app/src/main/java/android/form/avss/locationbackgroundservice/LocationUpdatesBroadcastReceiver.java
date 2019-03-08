@@ -11,6 +11,8 @@ import com.google.android.gms.location.LocationResult;
 
 import java.util.List;
 
+import static android.form.avss.locationbackgroundservice.MainActivity.LOCATION;
+
 /**
  * Receiver for handling location updates.
  *
@@ -31,11 +33,10 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent != null) {
-            final String action = intent.getAction();
-            if (ACTION_UPDATES_SERVICES.equals(action)) {
+            if (ACTION_UPDATES_SERVICES.equals(intent.getAction())) {
                 Bundle bundle = intent.getExtras();
                 if (bundle != null) {
-                    LocationResult result = bundle.getParcelable("LOCATION");
+                    LocationResult result = bundle.getParcelable(LOCATION);
                     if (result != null) {
                         List<Location> locations = result.getLocations();
                         LocationResultHelper locationResultHelper = new LocationResultHelper(context, locations);

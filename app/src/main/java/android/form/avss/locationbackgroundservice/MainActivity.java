@@ -2,16 +2,12 @@ package android.form.avss.locationbackgroundservice;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Build;
 import android.os.Looper;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -37,7 +33,6 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.tasks.Task;
 
-import java.util.List;
 
 import static android.form.avss.locationbackgroundservice.LocationUpdatesBroadcastReceiver.ACTION_UPDATES_SERVICES;
 
@@ -48,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_CODE = 34;
     private static final int REQUEST_CHECK_SETTINGS = 301;
+    public static final String LOCATION = "LOCATION";
     private String[] permissionsOfList = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
 
     /**
@@ -62,11 +58,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final long FASTEST_UPDATE_INTERVAL = UPDATE_INTERVAL / 2;
 
     /**
-     * The max time before batched results are delivered by location services. Results may be
-     * delivered sooner than this interval.
+     * The max time before batched results are delivered by location services.
+     * Results may be delivered sooner than this interval.
      */
     private static final long MAX_WAIT_TIME = UPDATE_INTERVAL * 3;
-
 
     /**
      * Stores parameters for requests to the FusedLocationProviderApi.
@@ -96,10 +91,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnLocationRemove.setOnClickListener(this);
 
         // Check if the user revoked runtime permissions.
-        if (!checkPermissions()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions();
-            }
+        if (!checkPermissions() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestPermissions();
         }
         buildGoogleApiClient();
     }
@@ -206,10 +199,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (requestCode == REQUEST_CHECK_SETTINGS) {
-            if (resultCode == Activity.RESULT_OK) {
+            switch (resultCode) {
+                case Activity.RESULT_OK:
 //                removeLocationUpdates();
-            } else if (resultCode == Activity.RESULT_CANCELED) {
-                requestLocationUpdates();
+                    break;
+
+                case Activity.RESULT_CANCELED:
+                    requestLocationUpdates();
+                    break;
             }
         }
         super.onActivityResult(requestCode, resultCode, data);
@@ -247,7 +244,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             super.onLocationResult(locationResult);
             Intent intent = new Intent(MainActivity.this, LocationUpdatesBroadcastReceiver.class);
             intent.setAction(ACTION_UPDATES_SERVICES);
-            intent.putExtra("LOCATION", locationResult);
+            intent.putExtra(LOCATION, locationResult);
             LocationUpdatesIntentService.enqueueWork(MainActivity.this, intent);
         }
     };
@@ -256,7 +253,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * Handles the Request Updates button and requests start of location updates.
      */
     public void requestLocationUpdates() {
-        try {
             Log.i(TAG, "Starting location updates");
             LocationRequestHelper.setRequesting(this, true);
             mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -267,12 +263,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             mFusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
                 if (location != null) {
-                    toast(location.getLatitude() + "  :  " + location.getLongitude());
+                    toast(location.getLatitude() + " : " + location.getLongitude());
                 }
             });
 
             mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
-        } catch (Exception e) { }
     }
 
     /**
@@ -289,8 +284,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onStart() {
         super.onStart();
-        PreferenceManager.getDefaultSharedPreferences(this)
-        .registerOnSharedPreferenceChangeListener(this);
+        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
@@ -332,12 +326,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (grantResults.length > 0) {
                 boolean isGranted = false;
                 for (int perm : grantResults) {
-                    if (perm == PackageManager.PERMISSION_GRANTED) {
-                        isGranted = true;
-                    } else {
-                        isGranted = false;
-                        break;
-                    }
+                    isGranted = perm == PackageManager.PERMISSION_GRANTED;
+                    if (!isGranted) break;
+//                    if (perm == PackageManager.PERMISSION_GRANTED) {
+//                        isGranted = true;
+//                    } else {
+//                        isGranted = false;
+//                        break;
+//                    }
                 }
 
                 if (isGranted) {

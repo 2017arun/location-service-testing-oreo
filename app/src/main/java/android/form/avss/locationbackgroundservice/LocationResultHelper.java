@@ -18,9 +18,9 @@ import static android.form.avss.locationbackgroundservice.LocationRequestHelper.
 /**
  * Class to process location results.
  */
-public class LocationResultHelper {
-    public static final String KEY_LOCATION_UPDATES_RESULT = "location-update-result";
-    public static final String PRIMARY_CHANNEL = "default";
+class LocationResultHelper {
+    static final String KEY_LOCATION_UPDATES_RESULT = "location-update-result";
+    private static final String PRIMARY_CHANNEL = "default";
     private Context mContext;
     private List<Location> mLocations;
     private NotificationManager mNotificationManager;
@@ -43,6 +43,7 @@ public class LocationResultHelper {
         if (mLocations.isEmpty()) {
             return mContext.getString(R.string.unknown_location);
         }
+
         StringBuilder sb = new StringBuilder();
         for (Location location : mLocations) {
             sb.append("(");
@@ -58,7 +59,7 @@ public class LocationResultHelper {
     /**
      * Saves location result as a string to {@link android.content.SharedPreferences}.
      */
-    public void saveResults() {
+    void saveResults() {
         PreferenceManager.getDefaultSharedPreferences(mContext).edit()
                 .putString(KEY_LOCATION_UPDATES_RESULT, getLocationResultTittle() + "\n" + getLocationResultText())
                 .apply();
@@ -67,7 +68,7 @@ public class LocationResultHelper {
     /**
      * Fetches location results from {@link android.content.SharedPreferences}.
      */
-    public static String getSavedLocationResult(Context context) {
+    static String getSavedLocationResult(Context context) {
         return PreferenceManager.getDefaultSharedPreferences(context).getString(KEY_LOCATION_UPDATES_RESULT, "");
     }
 
@@ -92,7 +93,7 @@ public class LocationResultHelper {
     /**
      * Displays a notification with the location results.
      */
-    public void showNotification() {
+    void showNotification() {
         Intent notificationIntent = new Intent(mContext, MainActivity.class);
 
         //construct a task stack
